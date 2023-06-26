@@ -1,0 +1,77 @@
+[
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "C:\\Users\\rulet\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\cores\\arduino"
+  },
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "C:\\Users\\rulet\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\variants\\standard"
+  },
+  {
+    "Sourcefile": "c:\\Users\\rulet\\Documents\\projects\\AR spatial computing Interface\\arduino\\build\\sketch\\EMG_with_MPU.ino.cpp",
+    "Include": "I2Cdev.h",
+    "Includepath": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\I2Cdev"
+  },
+  {
+    "Sourcefile": "c:\\Users\\rulet\\Documents\\projects\\AR spatial computing Interface\\arduino\\build\\sketch\\EMG_with_MPU.ino.cpp",
+    "Include": "Wire.h",
+    "Includepath": "C:\\Users\\rulet\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\libraries\\Wire\\src"
+  },
+  {
+    "Sourcefile": "c:\\Users\\rulet\\Documents\\projects\\AR spatial computing Interface\\arduino\\build\\sketch\\EMG_with_MPU.ino.cpp",
+    "Include": "MPU6050_6Axis_MotionApps20.h",
+    "Includepath": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\MPU6050"
+  },
+  {
+    "Sourcefile": "c:\\Users\\rulet\\Documents\\projects\\AR spatial computing Interface\\arduino\\build\\sketch\\EMG_with_MPU.ino.cpp",
+    "Include": "EMGFilters.h",
+    "Includepath": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\EMG_Filters"
+  },
+  {
+    "Sourcefile": "c:\\Users\\rulet\\Documents\\projects\\AR spatial computing Interface\\arduino\\build\\sketch\\EMG_with_MPU.ino.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\I2Cdev\\I2Cdev.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\libraries\\Wire\\src\\Wire.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.6\\libraries\\Wire\\src\\utility\\twi.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\MPU6050\\MPU6050.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\MPU6050\\MPU6050_6Axis_MotionApps20.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\MPU6050\\MPU6050_6Axis_MotionApps612.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\MPU6050\\MPU6050_9Axis_MotionApps41.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\rulet\\Documents\\Arduino\\libraries\\EMG_Filters\\EMGFilters.cpp",
+    "Include": "",
+    "Includepath": null
+  }
+]

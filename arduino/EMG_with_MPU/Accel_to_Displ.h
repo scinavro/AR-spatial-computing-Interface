@@ -25,7 +25,7 @@ class AccelToDispl {
     float X[3], Y[3], Z[3]; // ?[0]: 가속도, ?[1]: 속도, ?[2]: 변위
 
     AccelToDispl(float delta_t_) : delta_t(delta_t_) {}
-    void getAccelData(float accelX_, float accelY_, float accelZ_);
+    void setAccelData(float accelX_, float accelY_, float accelZ_);
     void filter(int mode);
     void integral(int mode);
 };

@@ -439,7 +439,7 @@ void loop() {
         mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
         mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-        myATD.getAccelData(aaWorld.x, aaWorld.y, aaWorld.z);
+        myATD.setAccelData(aaWorld.x, aaWorld.y, aaWorld.z);
         // myATD.filter(0);
         myATD.integral(1);
         // myATD.filter(1);

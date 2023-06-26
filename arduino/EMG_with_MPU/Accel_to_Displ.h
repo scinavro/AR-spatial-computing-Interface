@@ -1,29 +1,24 @@
 class AccelToDispl {
   private:
-    float temp_X[2][3] =
-        {
-            0,
-    },
-          temp_Y[2][3] =
-              {
-                  0,
-    },
-          temp_Z[2][3] = {
-              0,
+    float temp_X[2][3] = {
+        0,
     };
-    float EMA_X[2][3] =
-        {
-            0,
-    },
-          EMA_Y[2][3] =
-              {
-                  0,
-    },
-          EMA_Z[2][3] = {
-              0,
+    float temp_Y[2][3] = {
+        0,
     };
-    float EMA_a[3] = {0.1, 0.1,
-                      0.2}; // 클수록 highpass filter 경계 주파수 증가 (0 ~ 1)
+    float temp_Z[2][3] = {
+        0,
+    };
+    float EMA_X[2][3] = {
+        0,
+    };
+    float EMA_Y[2][3] = {
+        0,
+    };
+    float EMA_Z[2][3] = {
+        0,
+    };
+    float EMA_a[3] = {0.1, 0.1, 0.2};
     float delta_t;
 
   public:
@@ -48,12 +43,9 @@ void AccelToDispl ::filter(int mode) {
     temp_Y[0][mode] += Y[mode] * delta_t;
     temp_Z[0][mode] += Z[mode] * delta_t;
 
-    EMA_X[0][mode] =
-        (EMA_a[mode] * temp_X[0][mode]) + ((1 - EMA_a[mode]) * EMA_X[0][mode]);
-    EMA_Y[0][mode] =
-        (EMA_a[mode] * temp_Y[0][mode]) + ((1 - EMA_a[mode]) * EMA_Y[0][mode]);
-    EMA_Z[0][mode] =
-        (EMA_a[mode] * temp_Z[0][mode]) + ((1 - EMA_a[mode]) * EMA_Z[0][mode]);
+    EMA_X[0][mode] = (EMA_a[mode] * temp_X[0][mode]) + ((1 - EMA_a[mode]) * EMA_X[0][mode]);
+    EMA_Y[0][mode] = (EMA_a[mode] * temp_Y[0][mode]) + ((1 - EMA_a[mode]) * EMA_Y[0][mode]);
+    EMA_Z[0][mode] = (EMA_a[mode] * temp_Z[0][mode]) + ((1 - EMA_a[mode]) * EMA_Z[0][mode]);
 
     X[mode] = temp_X[0][mode] - EMA_X[0][mode];
     Y[mode] = temp_Y[0][mode] - EMA_Y[0][mode];
@@ -64,12 +56,9 @@ void AccelToDispl ::filter(int mode) {
         temp_Y[1][mode] += Y[mode] * delta_t;
         temp_Z[1][mode] += Z[mode] * delta_t;
 
-        EMA_X[1][mode] = (EMA_a[mode] * temp_X[1][mode]) +
-                         ((1 - EMA_a[mode]) * EMA_X[1][mode]);
-        EMA_Y[1][mode] = (EMA_a[mode] * temp_Y[1][mode]) +
-                         ((1 - EMA_a[mode]) * EMA_Y[1][mode]);
-        EMA_Z[1][mode] = (EMA_a[mode] * temp_Z[1][mode]) +
-                         ((1 - EMA_a[mode]) * EMA_Z[1][mode]);
+        EMA_X[1][mode] = (EMA_a[mode] * temp_X[1][mode]) + ((1 - EMA_a[mode]) * EMA_X[1][mode]);
+        EMA_Y[1][mode] = (EMA_a[mode] * temp_Y[1][mode]) + ((1 - EMA_a[mode]) * EMA_Y[1][mode]);
+        EMA_Z[1][mode] = (EMA_a[mode] * temp_Z[1][mode]) + ((1 - EMA_a[mode]) * EMA_Z[1][mode]);
 
         X[mode] = temp_X[1][mode] - EMA_X[1][mode];
         Y[mode] = temp_Y[1][mode] - EMA_Y[1][mode];

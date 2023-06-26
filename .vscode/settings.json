@@ -1,6 +1,6 @@
 {
   "C_Cpp.intelliSenseEngine": "Tag Parser",
   "C_Cpp.clang_format_fallbackStyle": "Google",
-  "C_Cpp.clang_format_style": "{IndentWidth: 4, ColumnLimit: 80}",
+  "C_Cpp.clang_format_style": "{IndentWidth: 4, ColumnLimit: 160}",
   "editor.tabSize": 4
 }

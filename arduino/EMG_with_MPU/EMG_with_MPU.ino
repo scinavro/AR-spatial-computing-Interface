@@ -93,7 +93,7 @@ MPU6050 mpu;
 // (in degrees) calculated from the quaternions coming from the FIFO.
 // Note that Euler angles suffer from gimbal lock (for more info, see
 // http://en.wikipedia.org/wiki/Gimbal_lock)
-// #define OUTPUT_READABLE_EULER
+#define OUTPUT_READABLE_EULER
 
 // uncomment "OUTPUT_READABLE_YAWPITCHROLL" if you want to see the yaw/
 // pitch/roll angles (in degrees) calculated from the quaternions coming
@@ -113,7 +113,7 @@ MPU6050 mpu;
 // components with gravity removed and adjusted for the world frame of
 // reference (yaw is relative to initial orientation, since no magnetometer
 // is present in this case). Could be quite handy in some cases.
-#define OUTPUT_READABLE_WORLDACCEL
+// #define OUTPUT_READABLE_WORLDACCEL
 
 // uncomment "OUTPUT_TEAPOT" if you want output that matches the
 // format used for the InvenSense teapot demo
@@ -316,13 +316,12 @@ void loop() {
                                                    // display quaternion values in easy matrix form: w x
                                                    // y z
         mpu.dmpGetQuaternion(&q, fifoBuffer);
-        Serial.print("quat\t");
         Serial.print(q.w);
-        Serial.print("\t");
+        Serial.print("/");
         Serial.print(q.x);
-        Serial.print("\t");
+        Serial.print("/");
         Serial.print(q.y);
-        Serial.print("\t");
+        Serial.print("/");
         Serial.println(q.z);
 #endif
 
@@ -330,12 +329,13 @@ void loop() {
         // display Euler angles in degrees
         mpu.dmpGetQuaternion(&q, fifoBuffer);
         mpu.dmpGetEuler(euler, &q);
-        Serial.print("euler\t");
+
         Serial.print(euler[0] * 180 / M_PI);
-        Serial.print("\t");
+        Serial.print("/");
         Serial.print(euler[1] * 180 / M_PI);
-        Serial.print("\t");
+        Serial.print("/");
         Serial.println(euler[2] * 180 / M_PI);
+        delay(10);
 #endif
 
 #ifdef OUTPUT_READABLE_YAWPITCHROLL
@@ -400,7 +400,7 @@ void loop() {
         Serial.print("/");
         Serial.print(ypr[2] * 180 / M_PI);
         Serial.print("/");
-        Serial.println(classifyHandPosition(EMGBuf) == HAND_POSITION::REST ? 0 : classifyHandPosition(EMGBuf) == HAND_POSITION::WAVE_IN ? 1 : 2);
+        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::REST ? 0 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : 2);
         delay(10);
 #endif
 

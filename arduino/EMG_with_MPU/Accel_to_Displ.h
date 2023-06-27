@@ -18,7 +18,7 @@ class AccelToDispl {
     float EMA_Z[2][3] = {
         0,
     };
-    float EMA_a[3] = {0.1, 0.1, 0.2};
+    float EMA_a[3] = {0.6, 0.6, 0.6};
     float delta_t;
 
   public:
@@ -51,19 +51,17 @@ void AccelToDispl ::filter(int mode) {
     Y[mode] = temp_Y[0][mode] - EMA_Y[0][mode];
     Z[mode] = temp_Z[0][mode] - EMA_Z[0][mode];
 
-    if (mode == 0) {
-        temp_X[1][mode] += X[mode] * delta_t;
-        temp_Y[1][mode] += Y[mode] * delta_t;
-        temp_Z[1][mode] += Z[mode] * delta_t;
+    temp_X[1][mode] += X[mode] * delta_t;
+    temp_Y[1][mode] += Y[mode] * delta_t;
+    temp_Z[1][mode] += Z[mode] * delta_t;
 
-        EMA_X[1][mode] = (EMA_a[mode] * temp_X[1][mode]) + ((1 - EMA_a[mode]) * EMA_X[1][mode]);
-        EMA_Y[1][mode] = (EMA_a[mode] * temp_Y[1][mode]) + ((1 - EMA_a[mode]) * EMA_Y[1][mode]);
-        EMA_Z[1][mode] = (EMA_a[mode] * temp_Z[1][mode]) + ((1 - EMA_a[mode]) * EMA_Z[1][mode]);
+    EMA_X[1][mode] = (EMA_a[mode] * temp_X[1][mode]) + ((1 - EMA_a[mode]) * EMA_X[1][mode]);
+    EMA_Y[1][mode] = (EMA_a[mode] * temp_Y[1][mode]) + ((1 - EMA_a[mode]) * EMA_Y[1][mode]);
+    EMA_Z[1][mode] = (EMA_a[mode] * temp_Z[1][mode]) + ((1 - EMA_a[mode]) * EMA_Z[1][mode]);
 
-        X[mode] = temp_X[1][mode] - EMA_X[1][mode];
-        Y[mode] = temp_Y[1][mode] - EMA_Y[1][mode];
-        Z[mode] = temp_Z[1][mode] - EMA_Z[1][mode];
-    }
+    X[mode] = temp_X[1][mode] - EMA_X[1][mode];
+    Y[mode] = temp_Y[1][mode] - EMA_Y[1][mode];
+    Z[mode] = temp_Z[1][mode] - EMA_Z[1][mode];
 }
 
 // mode 1: 가속도 -> 속도,  mode 2: 속도 -> 변위

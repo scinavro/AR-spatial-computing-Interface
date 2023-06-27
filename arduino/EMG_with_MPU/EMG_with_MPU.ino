@@ -201,7 +201,7 @@ unsigned long timeBudget;
 #define EMGBufSize 20
 uint16_t EMGBuf[2][EMGBufSize];
 
-enum HAND_POSITION { REST = 0, WAVE_IN, WAVE_OUT };
+enum HAND_POSE { REST = 0, WAVE_IN, WAVE_OUT };
 
 float deltaT = 0.1;
 AccelToDispl myATD(deltaT);
@@ -440,11 +440,26 @@ void loop() {
         mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
         myATD.setAccelData(aaWorld.x, aaWorld.y, aaWorld.z);
-        // myATD.filter(0);
+        myATD.filter(0);
         myATD.integral(1);
         // myATD.filter(1);
-        myATD.integral(2);
+        // myATD.integral(2);
         // myATD.filter(2);
+
+        int Value1 = analogRead(SensorInputPin1);
+        int Value2 = analogRead(SensorInputPin2);
+
+        // filter processing
+        int DataAfterFilter1 = myFilter1.update(Value1);
+        int DataAfterFilter2 = myFilter2.update(Value2);
+
+        int envlope1 = sq(DataAfterFilter1);
+        int envlope2 = sq(DataAfterFilter2);
+        // any value under Threshold will be set to zero
+        envlope1 = (envlope1 > Threshold1) ? envlope1 : 0;
+        envlope2 = (envlope2 > Threshold2) ? envlope2 : 0;
+
+        pushBuf(envlope1, envlope2, EMGBuf);
 
         Serial.print(ypr[0] * 180 / M_PI);
         Serial.print("/");
@@ -452,11 +467,13 @@ void loop() {
         Serial.print("/");
         Serial.print(ypr[2] * 180 / M_PI);
         Serial.print("/");
-        Serial.print(myATD.X[2]);
+        Serial.print(myATD.X[1]);
         Serial.print("/");
-        Serial.print(myATD.Y[2]);
+        Serial.print(myATD.Y[1]);
         Serial.print("/");
-        Serial.println(myATD.Z[2]);
+        Serial.print(myATD.Z[1]);
+        Serial.print("/");
+        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::REST ? 0 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : 2);
         delay(10);
 #endif
 
@@ -476,8 +493,8 @@ void loop() {
     }
 }
 
-int classifyHandPosition(uint16_t dataBuf[][EMGBufSize]) {
-    HAND_POSITION handPosition;
+int classifyHandPose(uint16_t dataBuf[][EMGBufSize]) {
+    HAND_POSE handPose;
     int avgData1 = 0;
     int avgData2 = 0;
 
@@ -489,14 +506,14 @@ int classifyHandPosition(uint16_t dataBuf[][EMGBufSize]) {
     avgData2 /= EMGBufSize;
 
     if (avgData1 > 50 && avgData2 <= 50) {
-        handPosition = HAND_POSITION::WAVE_IN;
+        handPose = HAND_POSE::WAVE_IN;
     } else if (avgData1 <= 50 && avgData2 > 50) {
-        handPosition = HAND_POSITION::WAVE_OUT;
+        handPose = HAND_POSE::WAVE_OUT;
     } else {
-        handPosition = HAND_POSITION::REST;
+        handPose = HAND_POSE::REST;
     }
 
-    return handPosition;
+    return handPose;
 }
 
 void pushBuf(int data1, int data2, uint16_t dataBuf[][EMGBufSize]) {

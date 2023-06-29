@@ -119,7 +119,7 @@ MPU6050 mpu;
 // format used for the InvenSense teapot demo
 // #define OUTPUT_TEAPOT
 
-#define INTERRUPT_PIN 2 // use pin 2 on Arduino Uno & most boards
+#define INTERRUPT_PIN 5 // use pin 2 on Arduino Uno & most boards
 // #define LED_PIN 13       // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 // bool blinkState = false;
 
@@ -166,10 +166,10 @@ void dmpDataReady() { mpuInterrupt = true; }
 
 #include "EMGFilters.h"
 
-#define TIMING_DEBUG 0
+#define EMG_DEBUG 0
 
-#define SensorInputPin1 A0 // input pin number
-#define SensorInputPin2 A1
+#define SensorInputPin1 36 // input pin number
+#define SensorInputPin2 39
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
@@ -202,8 +202,8 @@ unsigned long timeBudget;
 uint16_t EMGBuf[2][EMGBufSize];
 
 enum HAND_POSE { REST = 0, WAVE_IN, WAVE_OUT };
-static int classBndry1 = 50;
-static int classBndry2 = 50;
+static int classBndry1 = 500;
+static int classBndry2 = 2000;
 
 float deltaT = 0.1;
 AccelToDispl myATD(deltaT);
@@ -221,7 +221,7 @@ void setup() {
     // initialize serial communication
     // (115200 chosen because it is required for Teapot Demo output, but it's
     // really up to you depending on your project)
-    Serial.begin(38400);
+    Serial.begin(115200);
     while (!Serial)
         ; // wait for Leonardo enumeration, others continue immediately
 
@@ -361,29 +361,6 @@ void loop() {
 
         pushEMGBuf(envlope1, envlope2, EMGBuf);
 
-        if (TIMING_DEBUG) {
-            Serial.print("Read Data: ");
-            Serial.print(Value1);
-            Serial.print("\t");
-            Serial.println(Value2);
-            Serial.print("Filtered Data: ");
-            Serial.print(DataAfterFilter1);
-            Serial.print("\t");
-            Serial.println(DataAfterFilter2);
-            Serial.print("Squared Data: ");
-            Serial.print(envlope1);
-            Serial.print("\t");
-            Serial.print(envlope2);
-            Serial.print("\t");
-            Serial.print(3500); // y-axis scale 고정을 위한 constant
-            Serial.print("/");
-            Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0);
-            delay(10);
-            // Serial.print("Filters cost time: ");
-            // Serial.println(timeStamp);
-            // the filter cost average around 520 us
-        }
-
         /*------------end here---------------------*/
         // if less than timeBudget, then you still have (timeBudget - timeStamp)
         // to do your work delayMicroseconds(500); if more than timeBudget, the
@@ -406,19 +383,31 @@ void loop() {
         // myATD.integral(2);
         // myATD.filter(2);
 
-        Serial.print(ypr[0] * 180 / M_PI);
-        Serial.print("/");
-        Serial.print(ypr[1] * 180 / M_PI);
-        Serial.print("/");
-        Serial.print(ypr[2] * 180 / M_PI);
-        Serial.print("/");
-        Serial.print(abs(myATD.X[1]) > 0.5 ? myATD.X[1] : 0);
-        Serial.print("/");
-        Serial.print(abs(myATD.Y[1]) > 0.5 ? myATD.Y[1] : 0);
-        Serial.print("/");
-        Serial.print(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0);
-        Serial.print("/");
-        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0);
+        if (EMG_DEBUG) {
+            Serial.print(envlope1);
+            Serial.print("\t");
+            Serial.print(envlope2);
+            Serial.print("\t");
+            Serial.println(3500); // y-axis scale 고정을 위한 constant
+            // Serial.print("Filters cost time: ");
+            // Serial.println(timeStamp);
+            // the filter cost average around 520 us
+        } else {
+            Serial.print(ypr[0] * 180 / M_PI);
+            Serial.print("/");
+            Serial.print(ypr[1] * 180 / M_PI);
+            Serial.print("/");
+            Serial.print(ypr[2] * 180 / M_PI);
+            Serial.print("/");
+            Serial.print(abs(myATD.X[1]) > 0.5 ? myATD.X[1] : 0);
+            Serial.print("/");
+            Serial.print(abs(myATD.Y[1]) > 0.5 ? myATD.Y[1] : 0);
+            Serial.print("/");
+            Serial.print(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0);
+            Serial.print("/");
+            Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0);
+        }
+
         delay(10);
 #endif
 

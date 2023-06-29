@@ -166,7 +166,7 @@ void dmpDataReady() { mpuInterrupt = true; }
 
 #include "EMGFilters.h"
 
-#define TIMING_DEBUG 1
+#define TIMING_DEBUG 0
 
 #define SensorInputPin1 A0 // input pin number
 #define SensorInputPin2 A1
@@ -202,6 +202,8 @@ unsigned long timeBudget;
 uint16_t EMGBuf[2][EMGBufSize];
 
 enum HAND_POSE { REST = 0, WAVE_IN, WAVE_OUT };
+static int classBndry1 = 50;
+static int classBndry2 = 50;
 
 float deltaT = 0.1;
 AccelToDispl myATD(deltaT);
@@ -219,7 +221,7 @@ void setup() {
     // initialize serial communication
     // (115200 chosen because it is required for Teapot Demo output, but it's
     // really up to you depending on your project)
-    Serial.begin(115200);
+    Serial.begin(38400);
     while (!Serial)
         ; // wait for Leonardo enumeration, others continue immediately
 
@@ -295,16 +297,12 @@ void setup() {
     myFilter2.init(sampleRate, humFreq, true, true, true);
     // setup for time cost measure
     // using micros()
-    timeBudget = 1e6 / sampleRate;
+    // timeBudget = 1e6 / sampleRate;
     // micros will overflow and auto return to zero every 70 minutes
     // ###################################################################################
     // ###################################################################################
     // ###################################################################################
 }
-
-// ================================================================
-// ===                    MAIN PROGRAM LOOP                     ===
-// ================================================================
 
 void loop() {
     // if programming failed, don't try to do anything
@@ -346,7 +344,7 @@ void loop() {
         // In order to make sure the ADC sample frequence on arduino,
         // the time cost should be measured each loop
         /*------------start here-------------------*/
-        timeStamp = micros();
+        // timeStamp = micros();
 
         int Value1 = analogRead(SensorInputPin1);
         int Value2 = analogRead(SensorInputPin2);
@@ -361,24 +359,29 @@ void loop() {
         envlope1 = (envlope1 > Threshold1) ? envlope1 : 0;
         envlope2 = (envlope2 > Threshold2) ? envlope2 : 0;
 
-        pushBuf(envlope1, envlope2, EMGBuf);
+        pushEMGBuf(envlope1, envlope2, EMGBuf);
 
-        timeStamp = micros() - timeStamp;
         if (TIMING_DEBUG) {
-            // Serial.print("Read Data: "); Serial.println(Value);
-            // Serial.print("Filtered Data: ");Serial.println(DataAfterFilter);
-            // Serial.print("Squared Data: ");
-            // Serial.print(envlope1);
-            // Serial.print("\t");
-            // Serial.print(envlope2);
-            // Serial.print("\t");
-            // Serial.print(3500);  // y-axis scale 고정을 위한 constant
-            // Serial.print("/");
-            // Serial.println(classifyHandPosition(EMGBuf) ==
-            // HAND_POSITION::REST ? 0 : classifyHandPosition(EMGBuf) ==
-            // HAND_POSITION::WAVE_IN ? 1 : 2); delay(10); Serial.print("Filters
-            // cost time: "); Serial.println(timeStamp); the filter cost average
-            // around 520 us
+            Serial.print("Read Data: ");
+            Serial.print(Value1);
+            Serial.print("\t");
+            Serial.println(Value2);
+            Serial.print("Filtered Data: ");
+            Serial.print(DataAfterFilter1);
+            Serial.print("\t");
+            Serial.println(DataAfterFilter2);
+            Serial.print("Squared Data: ");
+            Serial.print(envlope1);
+            Serial.print("\t");
+            Serial.print(envlope2);
+            Serial.print("\t");
+            Serial.print(3500); // y-axis scale 고정을 위한 constant
+            Serial.print("/");
+            Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0);
+            delay(10);
+            // Serial.print("Filters cost time: ");
+            // Serial.println(timeStamp);
+            // the filter cost average around 520 us
         }
 
         /*------------end here---------------------*/
@@ -389,18 +392,33 @@ void loop() {
         // ###################################################################################
         // ###################################################################################
 
-        // display Euler angles in degrees
         mpu.dmpGetQuaternion(&q, fifoBuffer);
+        mpu.dmpGetAccel(&aa, fifoBuffer);
         mpu.dmpGetGravity(&gravity, &q);
+        mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+        mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
         mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-        // Serial.print("ypr\t");
+
+        myATD.setAccelData(aaWorld.x, aaWorld.y, aaWorld.z);
+        myATD.filter(0);
+        myATD.integral(1);
+        myATD.filter(1);
+        // myATD.integral(2);
+        // myATD.filter(2);
+
         Serial.print(ypr[0] * 180 / M_PI);
         Serial.print("/");
         Serial.print(ypr[1] * 180 / M_PI);
         Serial.print("/");
         Serial.print(ypr[2] * 180 / M_PI);
         Serial.print("/");
-        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::REST ? 0 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : 2);
+        Serial.print(abs(myATD.X[1]) > 0.5 ? myATD.X[1] : 0);
+        Serial.print("/");
+        Serial.print(abs(myATD.Y[1]) > 0.5 ? myATD.Y[1] : 0);
+        Serial.print("/");
+        Serial.print(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0);
+        Serial.print("/");
+        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0);
         delay(10);
 #endif
 
@@ -505,9 +523,9 @@ int classifyHandPose(uint16_t dataBuf[][EMGBufSize]) {
     avgData1 /= EMGBufSize;
     avgData2 /= EMGBufSize;
 
-    if (avgData1 > 50 && avgData2 <= 50) {
+    if (avgData1 > classBndry1 && avgData2 <= classBndry2) {
         handPose = HAND_POSE::WAVE_IN;
-    } else if (avgData1 <= 50 && avgData2 > 50) {
+    } else if (avgData1 <= classBndry1 && avgData2 > classBndry2) {
         handPose = HAND_POSE::WAVE_OUT;
     } else {
         handPose = HAND_POSE::REST;
@@ -516,7 +534,7 @@ int classifyHandPose(uint16_t dataBuf[][EMGBufSize]) {
     return handPose;
 }
 
-void pushBuf(int data1, int data2, uint16_t dataBuf[][EMGBufSize]) {
+void pushEMGBuf(int data1, int data2, uint16_t dataBuf[][EMGBufSize]) {
     for (int i = 1; i < EMGBufSize; i++) {
         dataBuf[0][i - 1] = dataBuf[0][i];
         dataBuf[1][i - 1] = dataBuf[1][i];

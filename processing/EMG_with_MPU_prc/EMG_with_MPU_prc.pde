@@ -12,7 +12,7 @@ float yaw, pitch, roll;
 int pose;
 void setup() {
   size (1560, 720, P3D);
-  myPort = new Serial(this, "COM7", 115200); // starts the serial communication
+  myPort = new Serial(this, "COM7", 38400); // starts the serial communication
   myPort.bufferUntil('\n');
 }
 void draw() {

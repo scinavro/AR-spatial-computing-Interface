@@ -201,9 +201,11 @@ unsigned long timeBudget;
 #define EMGBufSize 20
 uint16_t EMGBuf[2][EMGBufSize];
 
+#define VibMotorPin 33
+
 enum HAND_POSE { REST = 0, WAVE_IN, WAVE_OUT };
-static int classBndry1 = 500;
-static int classBndry2 = 2000;
+static int classBndry1 = 5000;
+static int classBndry2 = 10000;
 
 float deltaT = 0.1;
 AccelToDispl myATD(deltaT);
@@ -302,6 +304,7 @@ void setup() {
     // ###################################################################################
     // ###################################################################################
     // ###################################################################################
+    pinMode(VibMotorPin, OUTPUT);
 }
 
 void loop() {
@@ -361,6 +364,8 @@ void loop() {
 
         pushEMGBuf(envlope1, envlope2, EMGBuf);
 
+        int handPose = classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0;
+
         /*------------end here---------------------*/
         // if less than timeBudget, then you still have (timeBudget - timeStamp)
         // to do your work delayMicroseconds(500); if more than timeBudget, the
@@ -388,7 +393,7 @@ void loop() {
             Serial.print("\t");
             Serial.print(envlope2);
             Serial.print("\t");
-            Serial.println(3500); // y-axis scale 고정을 위한 constant
+            Serial.println(100000); // y-axis scale 고정을 위한 constant
             // Serial.print("Filters cost time: ");
             // Serial.println(timeStamp);
             // the filter cost average around 520 us
@@ -405,8 +410,13 @@ void loop() {
             Serial.print("/");
             Serial.print(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0);
             Serial.print("/");
-            Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0);
+            Serial.println(handPose);
         }
+
+        if (handPose != HAND_POSE::REST)
+            digitalWrite(VibMotorPin, HIGH);
+        else
+            digitalWrite(VibMotorPin, LOW);
 
         delay(10);
 #endif

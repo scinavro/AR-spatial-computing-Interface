@@ -197,6 +197,11 @@ unsigned long timeBudget;
 // ###################################################################################
 // ###################################################################################
 #include "Accel_to_Displ.h"
+#include "BluetoothSerial.h"
+
+String device_name = "ESP32-BT-Slave";
+
+BluetoothSerial SerialBT;
 
 #define EMGBufSize 20
 uint16_t EMGBuf[2][EMGBufSize];
@@ -304,6 +309,8 @@ void setup() {
     // ###################################################################################
     // ###################################################################################
     // ###################################################################################
+    SerialBT.begin(device_name); // Bluetooth device name
+
     pinMode(VibMotorPin, OUTPUT);
 }
 
@@ -398,19 +405,13 @@ void loop() {
             // Serial.println(timeStamp);
             // the filter cost average around 520 us
         } else {
-            Serial.print(ypr[0] * 180 / M_PI);
-            Serial.print("/");
-            Serial.print(ypr[1] * 180 / M_PI);
-            Serial.print("/");
-            Serial.print(ypr[2] * 180 / M_PI);
-            Serial.print("/");
-            Serial.print(abs(myATD.X[1]) > 0.5 ? myATD.X[1] : 0);
-            Serial.print("/");
-            Serial.print(abs(myATD.Y[1]) > 0.5 ? myATD.Y[1] : 0);
-            Serial.print("/");
-            Serial.print(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0);
-            Serial.print("/");
-            Serial.println(handPose);
+            String resultant;
+            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" +
+                        String(abs(myATD.X[1]) > 0.5 ? myATD.X[1] : 0) + "/" + String(abs(myATD.Y[1]) > 0.5 ? myATD.Y[1] : 0) + "/" +
+                        String(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0) + "/" + handPose;
+
+            Serial.println(resultant);
+            SerialBT.println(resultant);
         }
 
         if (handPose != HAND_POSE::REST)

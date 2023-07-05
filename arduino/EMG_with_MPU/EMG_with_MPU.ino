@@ -204,13 +204,16 @@ String device_name = "ESP32-BT-Slave";
 BluetoothSerial SerialBT;
 
 #define EMGBufSize 20
+#define AvgBufSize 60
 uint16_t EMGBuf[2][EMGBufSize];
+float dataAvg[AvgBufSize] = {0};
+float dataAvgAvg = 0;
 
 #define VibMotorPin 33
 
-enum HAND_POSE { REST = 0, WAVE_IN, WAVE_OUT };
-static int classBndry1 = 5000;
-static int classBndry2 = 10000;
+enum HAND_POSE { REST = 0, FIST, SPREAD };
+static int classBndry1 = 1500;
+static int classBndry2 = -2000;
 
 float deltaT = 0.1;
 AccelToDispl myATD(deltaT);
@@ -370,8 +373,8 @@ void loop() {
         envlope2 = (envlope2 > Threshold2) ? envlope2 : 0;
 
         pushEMGBuf(envlope1, envlope2, EMGBuf);
-
-        int handPose = classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_OUT ? 2 : 0;
+        // int handPose = classifyHandPose(EMGBuf);
+        int handPose = classifyHandPose(EMGBuf) == HAND_POSE::FIST ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::SPREAD ? 2 : 0;
 
         /*------------end here---------------------*/
         // if less than timeBudget, then you still have (timeBudget - timeStamp)
@@ -400,7 +403,11 @@ void loop() {
             Serial.print("\t");
             Serial.print(envlope2);
             Serial.print("\t");
-            Serial.println(100000); // y-axis scale 고정을 위한 constant
+            // Serial.print(envlope1 - envlope2);
+            // Serial.print("\t");
+            Serial.print(2000); // y-axis scale 고정을 위한 constant
+            Serial.print("\t");
+            Serial.println(-2000);
             // Serial.print("Filters cost time: ");
             // Serial.println(timeStamp);
             // the filter cost average around 520 us
@@ -491,7 +498,7 @@ void loop() {
         Serial.print("/");
         Serial.print(myATD.Z[1]);
         Serial.print("/");
-        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::REST ? 0 : classifyHandPose(EMGBuf) == HAND_POSE::WAVE_IN ? 1 : 2);
+        Serial.println(classifyHandPose(EMGBuf) == HAND_POSE::REST ? 0 : classifyHandPose(EMGBuf) == HAND_POSE::FIST ? 1 : 2);
         delay(10);
 #endif
 
@@ -513,23 +520,31 @@ void loop() {
 
 int classifyHandPose(uint16_t dataBuf[][EMGBufSize]) {
     HAND_POSE handPose;
-    int avgData1 = 0;
-    int avgData2 = 0;
 
-    for (int i = 0; i < EMGBufSize; i++) {
-        avgData1 += dataBuf[0][i];
-        avgData2 += dataBuf[1][i];
-    }
-    avgData1 /= EMGBufSize;
-    avgData2 /= EMGBufSize;
+    for (int i = 1; i < AvgBufSize; i++)
+        dataAvg[i - 1] = dataAvg[i];
 
-    if (avgData1 > classBndry1 && avgData2 <= classBndry2) {
-        handPose = HAND_POSE::WAVE_IN;
-    } else if (avgData1 <= classBndry1 && avgData2 > classBndry2) {
-        handPose = HAND_POSE::WAVE_OUT;
-    } else {
+    dataAvg[AvgBufSize - 1] = 0;
+
+    for (int i = 0; i < EMGBufSize; i++)
+        dataAvg[AvgBufSize - 1] += dataBuf[0][i] - dataBuf[1][i];
+
+    dataAvg[AvgBufSize - 1] /= EMGBufSize;
+
+    for (int i = 0; i < AvgBufSize; i++)
+        dataAvgAvg += dataAvg[i];
+
+    dataAvgAvg /= AvgBufSize;
+
+    if (dataAvgAvg > classBndry1)
+        handPose = HAND_POSE::FIST;
+    else if (dataAvgAvg < classBndry2)
+        handPose = HAND_POSE::SPREAD;
+    else
         handPose = HAND_POSE::REST;
-    }
+
+    // Serial.print(dataAvgAvg);
+    // Serial.print("\t");
 
     return handPose;
 }

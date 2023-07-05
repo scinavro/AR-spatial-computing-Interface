@@ -39,7 +39,7 @@
 
 #define TIMING_DEBUG 1
 
-#define SensorInputPin1 A1 // input pin number
+#define SensorInputPin1 36 // input pin number
 
 EMGFilters myFilter1;
 // discrete filters must works with fixed sample frequence
@@ -96,11 +96,12 @@ void loop() {
         // Serial.print("Read Data: "); Serial.println(Value);
         // Serial.print("Filtered Data: ");Serial.println(DataAfterFilter);
         // Serial.print("Squared Data: ");
-        Serial.print(envlope1);
+        Serial.print(Value1);
         Serial.print("\t");
-        Serial.println(2500); // y-axis scale 고정을 위한 constant
+        Serial.println(4000); // y-axis scale 고정을 위한 constant
         // Serial.print("Filters cost time: "); Serial.println(timeStamp);
         // the filter cost average around 520 us
+        delay(10);
     }
 
     /*------------end here---------------------*/

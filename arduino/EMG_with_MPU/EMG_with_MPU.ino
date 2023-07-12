@@ -59,7 +59,7 @@ void dmpDataReady() { mpuInterrupt = true; }
 
 #include "EMGFilters.h"
 
-#define EMG_DEBUG 0
+#define EMG_DEBUG 1
 
 #define SensorInputPin1 36 // input pin number
 #define SensorInputPin2 39
@@ -106,6 +106,7 @@ float dataAvgAvg = 0;
 #define VibMotorPin 33
 
 enum HAND_POSE { REST = 0, FIST, SPREAD };
+int currentHandPose = HAND_POSE::REST;
 static int classBndry1 = 1000;
 static int classBndry2 = -1500;
 
@@ -246,18 +247,22 @@ void loop() {
         pushEMGBuf(envlope1, envlope2, EMGBuf);
 
         if (EMG_DEBUG) {
+            if (Serial.available() > 0 && Serial.read() != 10)
+                currentHandPose = Serial.read() - '0';
             classifyHandPose(EMGBuf);
-            Serial.print(dataAvgAvg);
-            Serial.print("\t");
+            // Serial.print(dataAvgAvg);
+            // Serial.print("\t");
             Serial.print(envlope1);
             Serial.print("\t");
             Serial.print(envlope2);
             Serial.print("\t");
-            Serial.print(envlope1 - envlope2);
-            Serial.print("\t");
-            Serial.print(2000); // y-axis scale 고정을 위한 constant
-            Serial.print("\t");
-            Serial.println(-2000);
+            Serial.println(currentHandPose);
+            // Serial.print("\t");
+            // Serial.print(envlope1 - envlope2);
+            // Serial.print("\t");
+            // Serial.print(2000); // y-axis scale 고정을 위한 constant
+            // Serial.print("\t");
+            // Serial.println(-2000);
         } else {
             int handPose = classifyHandPose(EMGBuf) == HAND_POSE::FIST ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::SPREAD ? 2 : 0;
             String resultant;

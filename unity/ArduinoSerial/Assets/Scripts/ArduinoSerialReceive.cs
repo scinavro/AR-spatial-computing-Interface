@@ -9,10 +9,6 @@ using System.Text;
 
 public class ArduinoSerialReceive : MonoBehaviour
 {
-    SerialPort data_stream = new SerialPort("COM20", 115200, Parity.None, 8, StopBits.One);
-    BluetoothHelper bluetoothHelper;
-    string deviceName;
-
     public GameObject test_data;
     public Rigidbody rb;
     public Renderer poseColor;

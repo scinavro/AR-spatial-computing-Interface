@@ -9,7 +9,7 @@ using ArduinoBluetoothAPI;
 public class BluetoothSerial : ArduinoSerialReceive
 {
     BluetoothHelper bluetoothHelper;
-    string deviceName;
+    private string deviceName;
 
     // Start is called before the first frame update
     void Start()

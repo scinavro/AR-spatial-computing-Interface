@@ -59,7 +59,7 @@ void dmpDataReady() { mpuInterrupt = true; }
 
 #include "EMGFilters.h"
 
-#define EMG_DEBUG 1
+#define EMG_DEBUG 0
 
 #define SensorInputPin1 36 // input pin number
 #define SensorInputPin2 39
@@ -90,7 +90,6 @@ static int Threshold2 = 0;
 // ===               DECLARATION FOR CUSTOM USE                 ===
 // ================================================================
 
-#include "Accel_to_Displ.h"
 #include "BluetoothSerial.h"
 
 String device_name = "ESP32-BT-Slave";
@@ -109,9 +108,6 @@ enum HAND_POSE { REST = 0, FIST, SPREAD };
 int currentHandPose = HAND_POSE::REST;
 static int classBndry1 = 1000;
 static int classBndry2 = -1500;
-
-float deltaT = 0.1;
-AccelToDispl myATD(deltaT);
 
 void setup() {
 
@@ -224,13 +220,6 @@ void loop() {
         mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
         mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-        myATD.setAccelData(aaWorld.x, aaWorld.y, aaWorld.z);
-        myATD.filter(0);
-        myATD.integral(1);
-        myATD.filter(1);
-        // myATD.integral(2);
-        // myATD.filter(2);
-
         int Value1 = analogRead(SensorInputPin1);
         int Value2 = analogRead(SensorInputPin2);
 
@@ -250,26 +239,24 @@ void loop() {
             if (Serial.available() > 0 && Serial.read() != 10)
                 currentHandPose = Serial.read() - '0';
             classifyHandPose(EMGBuf);
-            // Serial.print(dataAvgAvg);
-            // Serial.print("\t");
+            Serial.print(dataAvgAvg);
+            Serial.print("\t");
             Serial.print(envlope1);
             Serial.print("\t");
             Serial.print(envlope2);
             Serial.print("\t");
-            Serial.println(currentHandPose);
+            // Serial.print(currentHandPose);
             // Serial.print("\t");
-            // Serial.print(envlope1 - envlope2);
-            // Serial.print("\t");
-            // Serial.print(2000); // y-axis scale 고정을 위한 constant
-            // Serial.print("\t");
-            // Serial.println(-2000);
+            Serial.print(envlope1 - envlope2);
+            Serial.print("\t");
+            Serial.print(2000); // y-axis scale 고정을 위한 constant
+            Serial.print("\t");
+            Serial.println(-2000);
         } else {
             int handPose = classifyHandPose(EMGBuf) == HAND_POSE::FIST ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::SPREAD ? 2 : 0;
             String resultant;
 
-            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" +
-                        String(abs(myATD.X[1]) > 0.5 ? myATD.X[1] : 0) + "/" + String(abs(myATD.Y[1]) > 0.5 ? myATD.Y[1] : 0) + "/" +
-                        String(abs(myATD.Z[1]) > 0.5 ? myATD.Z[1] : 0) + "/" + handPose;
+            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" + handPose;
 
             Serial.println(resultant);
             SerialBT.println(resultant);

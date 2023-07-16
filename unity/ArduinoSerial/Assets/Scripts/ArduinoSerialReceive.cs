@@ -22,7 +22,7 @@ public class ArduinoSerialReceive : MonoBehaviour
         // rb.velocity = new Vector3(-float.Parse(data[4]) * k, float.Parse(data[5]) * k, float.Parse(data[3]) * k);
         // rb.AddForce(-float.Parse(data[4]) * k, float.Parse(data[5]) * k, float.Parse(data[3]) * k, ForceMode.VelocityChange);
 
-        int pose = int.Parse(data[6]);
+        int pose = int.Parse(data[3]);
         if (pose == 1) // FIST
             poseColor.material.color = Color.magenta;
         else if (pose == 2) // SPREAD

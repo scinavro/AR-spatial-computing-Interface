@@ -12,8 +12,9 @@ using UnityEngine;
 public class ModelRequester : RunAbleThread
 {
     private RequestSocket client;
-    private Action<float[]> onOutputReceived;
+    private Action<int> onOutputReceived;
     private Action<Exception> onFail;
+
     /// <summary>
     ///     Request Hello message to server and receive message back. Do it 10 times.
     ///     Stop requesting when Running=false.
@@ -28,10 +29,7 @@ public class ModelRequester : RunAbleThread
 
             while (Running)
             {
-                Debug.Log("Sending Hello...");
-                client.SendFrame("Hello");
-
-                byte[] outputBytes = new byte[0];
+                byte[] outputBytes = new byte[4];
                 bool gotMessage = false;
                 while (Running)
                 {
@@ -46,11 +44,19 @@ public class ModelRequester : RunAbleThread
 
                 if (gotMessage)
                 {
-                    Debug.Log("Received " + System.Text.Encoding.Default.GetString(outputBytes));
+                    var _temp = BitConverter.ToString(outputBytes).ToLower();
+                    var temp = _temp.Split("-");
+                    byte[] a = new byte[4];
+                    for (int i = 0; i < 4; i++)
+                    {
+                        a[i] = Convert.ToByte(temp[i], 16);
+                    }
+                    if (BitConverter.IsLittleEndian)
+                        Array.Reverse(a);
+                    int output = BitConverter.ToInt32(a, 0);
 
-                    // var output = new float[outputBytes.Length / 4];
-                    // Buffer.BlockCopy(outputBytes, 0, output, 0, outputBytes.Length);
-                    // onOutputReceived?.Invoke(output);
+                    Debug.Log("Received: " + output);
+                    onOutputReceived?.Invoke(output);
                 }
             }
         }
@@ -58,17 +64,25 @@ public class ModelRequester : RunAbleThread
         NetMQConfig.Cleanup(); // this line is needed to prevent unity freeze after one use, not sure why yet
     }
 
-    public void SendInput(float[] input)
+    public void SendInput(int[] input)
     {
         try
         {
-            var byteArray = new byte[input.Length * 4];
-            Buffer.BlockCopy(input, 0, byteArray, 0, byteArray.Length);
-            client.SendFrame(byteArray);
+            Debug.Log("Sending Data...");
+            var EMGArray = new byte[input.Length * 4];
+            Buffer.BlockCopy(input, 0, EMGArray, 0, EMGArray.Length);
+
+            client.SendFrame(EMGArray);
         }
         catch (Exception e)
         {
-            onFail(e);
+            Debug.Log(e);
         }
+    }
+
+    public void SetOnTextReceivedListener(Action<int> onOutputReceived, Action<Exception> fallback)
+    {
+        this.onOutputReceived = onOutputReceived;
+        onFail = fallback;
     }
 }

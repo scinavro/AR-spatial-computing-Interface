@@ -253,19 +253,17 @@ void loop() {
             Serial.print("\t");
             Serial.println(-2000);
         } else {
-            int handPose = classifyHandPose(EMGBuf) == HAND_POSE::FIST ? 1 : classifyHandPose(EMGBuf) == HAND_POSE::SPREAD ? 2 : 0;
             String resultant;
-
-            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" + handPose;
+            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" + envlope1 + "/" + envlope2;
 
             Serial.println(resultant);
             SerialBT.println(resultant);
 
             // Vibration motor operation
-            if (handPose != HAND_POSE::REST)
-                digitalWrite(VibMotorPin, HIGH);
-            else
-                digitalWrite(VibMotorPin, LOW);
+            // if (handPose != HAND_POSE::REST)
+            //     digitalWrite(VibMotorPin, HIGH);
+            // else
+            //     digitalWrite(VibMotorPin, LOW);
         }
 
         delay(10);

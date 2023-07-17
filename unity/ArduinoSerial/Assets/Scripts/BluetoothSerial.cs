@@ -1,9 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using System;
-using System.Text;
 using ArduinoBluetoothAPI;
 
 public class BluetoothSerial : ArduinoSerialReceive
@@ -11,8 +8,16 @@ public class BluetoothSerial : ArduinoSerialReceive
     BluetoothHelper bluetoothHelper;
     private string deviceName;
 
+    public ModelClient client;
+
+    private const int WINDOW_SIZE = 500;
+    private const int EMG_CHANNELS = 2;
+
+    private Queue<int> EMG1 = new Queue<int>();
+    private Queue<int> EMG2 = new Queue<int>();
+
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         try
         {
@@ -31,7 +36,7 @@ public class BluetoothSerial : ArduinoSerialReceive
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.Log(ex);
         }
     }
 
@@ -41,19 +46,43 @@ public class BluetoothSerial : ArduinoSerialReceive
         // Debug.Log(receivedString);
         try
         {
-            if (receivedString == "") { }
-            // Debug.Log("'receivedString' is empty.");
-            else
+            if (receivedString != "")
             {
-                data = receivedString.Split("/");
-                ReflectData(data);
+                var data = receivedString.Split("/");
+                AngleData = data[0..3];
+                RotateObject(AngleData);
+
+                EMG1.Enqueue(int.Parse(data[3]));
+                EMG2.Enqueue(int.Parse(data[4]));
+
+                if (EMG1.Count > WINDOW_SIZE)
+                {
+                    EMG1.Dequeue();
+                    EMG2.Dequeue();
+                    // Predict(EMG1, EMG2);
+                    // ColorObject();
+                    // EMG1.Clear();
+                    // EMG2.Clear();
+                }
+
+                Predict(EMG1, EMG2);
+                ColorObject();
             }
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.Log(ex);
         }
 
+    }
+
+    public void Predict(Queue<int> EMG1, Queue<int> EMG2)
+    {
+        int[] input = new int[WINDOW_SIZE * EMG_CHANNELS];
+        EMG1.ToArray().CopyTo(input, 0);
+        EMG2.ToArray().CopyTo(input, EMG1.Count);
+
+        client.Predict(input, output => { pose = output; }, error => { });
     }
 
     void OnMessageReceived(BluetoothHelper helper)
@@ -91,7 +120,10 @@ public class BluetoothSerial : ArduinoSerialReceive
             {
                 Debug.Log("Connecting...");
                 if (bluetoothHelper.isDevicePaired())
+                {
+                    client = this.gameObject.AddComponent<ModelClient>();
                     bluetoothHelper.Connect(); // tries to connect
+                }
                 else
                     Debug.Log("Devide is not paired.");
             }
@@ -100,6 +132,8 @@ public class BluetoothSerial : ArduinoSerialReceive
             if (GUI.Button(new Rect(Screen.width / 2 - Screen.width / 10, Screen.height / 10, Screen.width / 5, Screen.height / 10), "Disconnect"))
             {
                 bluetoothHelper.Disconnect();
+                Destroy(client);
+                receivedString = "";
             }
     }
 }

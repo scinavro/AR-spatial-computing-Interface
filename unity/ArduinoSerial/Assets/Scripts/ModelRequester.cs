@@ -35,7 +35,6 @@ public class ModelRequester : RunAbleThread
                 {
                     try
                     {
-                        Debug.Log("Receiving Bytes...");
                         gotMessage = client.TryReceiveFrameBytes(out outputBytes);
                         if (gotMessage) break;
                     }

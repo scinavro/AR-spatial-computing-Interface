@@ -3,18 +3,20 @@ using UnityEngine;
 using System;
 using ArduinoBluetoothAPI;
 
-public class BluetoothSerial : ArduinoSerialReceive
+public class BluetoothSerial_4 : ArduinoSerialReceive
 {
     BluetoothHelper bluetoothHelper;
     private string deviceName;
 
     public ModelClient client;
 
-    private const int WINDOW_SIZE = 500;
-    private const int EMG_CHANNELS = 2;
+    private const int WINDOW_SIZE = 200;
+    private const int EMG_CHANNELS = 4;
 
     private Queue<int> EMG1 = new Queue<int>();
     private Queue<int> EMG2 = new Queue<int>();
+    private Queue<int> EMG3 = new Queue<int>();
+    private Queue<int> EMG4 = new Queue<int>();
 
     // Start is called before the first frame update
     private void Start()
@@ -43,7 +45,6 @@ public class BluetoothSerial : ArduinoSerialReceive
     // Update is called once per frame
     void Update()
     {
-        // Debug.Log(receivedString);
         try
         {
             if (receivedString != "")
@@ -54,15 +55,21 @@ public class BluetoothSerial : ArduinoSerialReceive
 
                 EMG1.Enqueue(int.Parse(data[3]));
                 EMG2.Enqueue(int.Parse(data[4]));
+                EMG3.Enqueue(int.Parse(data[5]));
+                EMG4.Enqueue(int.Parse(data[6]));
 
                 if (EMG1.Count > WINDOW_SIZE)
                 {
                     EMG1.Dequeue();
                     EMG2.Dequeue();
-                    Predict(EMG1, EMG2);
+                    EMG3.Dequeue();
+                    EMG4.Dequeue();
+                    Predict(EMG1, EMG2, EMG3, EMG4);
                     ColorObject();
                     EMG1.Clear();
                     EMG2.Clear();
+                    EMG3.Clear();
+                    EMG4.Clear();
                 }
 
                 // Predict(EMG1, EMG2);
@@ -76,11 +83,13 @@ public class BluetoothSerial : ArduinoSerialReceive
 
     }
 
-    public void Predict(Queue<int> EMG1, Queue<int> EMG2)
+    public void Predict(Queue<int> EMG1, Queue<int> EMG2, Queue<int> EMG3, Queue<int> EMG4)
     {
         int[] input = new int[WINDOW_SIZE * EMG_CHANNELS];
         EMG1.ToArray().CopyTo(input, 0);
         EMG2.ToArray().CopyTo(input, EMG1.Count);
+        EMG3.ToArray().CopyTo(input, EMG1.Count * 2);
+        EMG4.ToArray().CopyTo(input, EMG1.Count * 3);
 
         client.Predict(input, output => { pose = output; }, error => { });
     }
@@ -124,7 +133,7 @@ public class BluetoothSerial : ArduinoSerialReceive
                     client = this.gameObject.AddComponent<ModelClient>();
                     bluetoothHelper.Connect(); // tries to connect
                 }
-                else
+                else    
                     Debug.Log("Devide is not paired.");
             }
 

@@ -63,9 +63,13 @@ void dmpDataReady() { mpuInterrupt = true; }
 
 #define SensorInputPin1 36 // input pin number
 #define SensorInputPin2 39
+#define SensorInputPin3 34
+#define SensorInputPin4 32
 
 EMGFilters myFilter1;
 EMGFilters myFilter2;
+EMGFilters myFilter3;
+EMGFilters myFilter4;
 
 // discrete filters must works with fixed sample frequence
 // our emg filter only support "SAMPLE_FREQ_500HZ" or "SAMPLE_FREQ_1000HZ"
@@ -79,13 +83,6 @@ SAMPLE_FREQUENCY sampleRate = SAMPLE_FREQ_1000HZ;
 // other inputs will bypass all the EMG_FILTER
 NOTCH_FREQUENCY humFreq = NOTCH_FREQ_60HZ;
 
-// Calibration:
-// put on the sensors, and release your muscles;
-// wait a few seconds, and select the max value as the Threshold;
-// any value under Threshold will be set to zero
-static int Threshold1 = 0;
-static int Threshold2 = 0;
-
 // ================================================================
 // ===               DECLARATION FOR CUSTOM USE                 ===
 // ================================================================
@@ -96,18 +93,10 @@ String device_name = "ESP32-BT-Slave";
 
 BluetoothSerial SerialBT;
 
-#define EMGBufSize 20
-#define AvgBufSize 60
-uint16_t EMGBuf[2][EMGBufSize];
-float dataAvg[AvgBufSize] = {0};
-float dataAvgAvg = 0;
-
 #define VibMotorPin 33
 
 enum HAND_POSE { REST = 0, FIST, SPREAD };
-int currentHandPose = HAND_POSE::REST;
-static int classBndry1 = 1000;
-static int classBndry2 = -1500;
+int currentHandPose = 0;
 
 void setup() {
 
@@ -196,6 +185,8 @@ void setup() {
 
     myFilter1.init(sampleRate, humFreq, true, true, true);
     myFilter2.init(sampleRate, humFreq, true, true, true);
+    myFilter3.init(sampleRate, humFreq, true, true, true);
+    myFilter4.init(sampleRate, humFreq, true, true, true);
 
     // ================================================================
     // ===                  SETUP FOR CUSTOM USE                    ===
@@ -205,6 +196,9 @@ void setup() {
 
     pinMode(VibMotorPin, OUTPUT);
 }
+
+int poseCnt = 0;
+int poseDuration = 100;
 
 void loop() {
     // if programming failed, don't try to do anything
@@ -222,39 +216,46 @@ void loop() {
 
         int Value1 = analogRead(SensorInputPin1);
         int Value2 = analogRead(SensorInputPin2);
+        int Value3 = analogRead(SensorInputPin3);
+        int Value4 = analogRead(SensorInputPin4);
 
         // filter processing
         int DataAfterFilter1 = myFilter1.update(Value1);
         int DataAfterFilter2 = myFilter2.update(Value2);
+        int DataAfterFilter3 = myFilter1.update(Value3);
+        int DataAfterFilter4 = myFilter2.update(Value4);
 
         int envlope1 = sq(DataAfterFilter1);
         int envlope2 = sq(DataAfterFilter2);
-        // any value under Threshold will be set to zero
-        envlope1 = (envlope1 > Threshold1) ? envlope1 : 0;
-        envlope2 = (envlope2 > Threshold2) ? envlope2 : 0;
-
-        pushEMGBuf(envlope1, envlope2, EMGBuf);
+        int envlope3 = sq(DataAfterFilter3);
+        int envlope4 = sq(DataAfterFilter4);
 
         if (EMG_DEBUG) {
             if (Serial.available() > 0 && Serial.read() != 10)
                 currentHandPose = Serial.read() - '0';
-            classifyHandPose(EMGBuf);
-            // Serial.print(dataAvgAvg);
-            // Serial.print("\t");
+            if (poseCnt > poseDuration) {
+                currentHandPose = 0;
+                poseCnt = 0;
+            }
             Serial.print(envlope1);
             Serial.print("\t");
             Serial.print(envlope2);
             Serial.print("\t");
+            Serial.print(envlope3);
+            Serial.print("\t");
+            Serial.print(envlope4);
+            Serial.print("\t");
             Serial.println(currentHandPose);
+            if (currentHandPose != 0)
+                poseCnt++;
             // Serial.print("\t");
-            // Serial.print(envlope1 - envlope2);
-            // Serial.print("\t");
-            // Serial.print(2000); // y-axis scale 고정을 위한 constant
+            // Serial.println(90000); // y-axis scale 고정을 위한 constant
             // Serial.print("\t");
             // Serial.println(-2000);
         } else {
             String resultant;
-            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" + envlope1 + "/" + envlope2;
+            resultant = String(ypr[0] * 180 / M_PI) + "/" + String(ypr[1] * 180 / M_PI) + "/" + String(ypr[2] * 180 / M_PI) + "/" + envlope1 + "/" + envlope2 +
+                        "/" + envlope3 + "/" + envlope4;
 
             Serial.println(resultant);
             SerialBT.println(resultant);
@@ -268,41 +269,4 @@ void loop() {
 
         delay(10);
     }
-}
-
-int classifyHandPose(uint16_t dataBuf[][EMGBufSize]) {
-    HAND_POSE handPose;
-
-    for (int i = 1; i < AvgBufSize; i++)
-        dataAvg[i - 1] = dataAvg[i];
-
-    dataAvg[AvgBufSize - 1] = 0;
-
-    for (int i = 0; i < EMGBufSize; i++)
-        dataAvg[AvgBufSize - 1] += dataBuf[0][i] - dataBuf[1][i];
-
-    dataAvg[AvgBufSize - 1] /= EMGBufSize;
-
-    for (int i = 0; i < AvgBufSize; i++)
-        dataAvgAvg += dataAvg[i];
-
-    dataAvgAvg /= AvgBufSize;
-
-    if (dataAvgAvg > classBndry1)
-        handPose = HAND_POSE::FIST;
-    else if (dataAvgAvg < classBndry2)
-        handPose = HAND_POSE::SPREAD;
-    else
-        handPose = HAND_POSE::REST;
-
-    return handPose;
-}
-
-void pushEMGBuf(int data1, int data2, uint16_t dataBuf[][EMGBufSize]) {
-    for (int i = 1; i < EMGBufSize; i++) {
-        dataBuf[0][i - 1] = dataBuf[0][i];
-        dataBuf[1][i - 1] = dataBuf[1][i];
-    }
-    dataBuf[0][EMGBufSize - 1] = data1;
-    dataBuf[1][EMGBufSize - 1] = data2;
 }

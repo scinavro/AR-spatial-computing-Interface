@@ -133,7 +133,7 @@ public class BluetoothSerial_4 : ArduinoSerialReceive
                     client = this.gameObject.AddComponent<ModelClient>();
                     bluetoothHelper.Connect(); // tries to connect
                 }
-                else    
+                else
                     Debug.Log("Devide is not paired.");
             }
 

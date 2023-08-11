@@ -21,7 +21,7 @@
 MPU6050 mpu;
 // MPU6050 mpu(0x69); // <-- use for AD0 high
 
-#define INTERRUPT_PIN 5 // use pin 2 on Arduino Uno & most boards
+#define INTERRUPT_PIN 23 // use pin 2 on Arduino Uno & most boards
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful

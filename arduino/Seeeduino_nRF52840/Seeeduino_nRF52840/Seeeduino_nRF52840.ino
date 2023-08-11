@@ -37,13 +37,25 @@ BLEDfu bledfu;   // OTA DFU service
 BLEDis bledis;   // device information
 BLEUart bleuart; // uart over ble
 BLEBas blebas;   // battery
+//===============================BLUETOOTH ENDS===============================//
 
 #include "LSM6DS3.h"
 #include "Wire.h"
-//===============================BLUETOOTH ENDS===============================//
 
 // Create a instance of class LSM6DS3
 LSM6DS3 myIMU(I2C_MODE, 0x6A); // I2C device address 0x6A
+
+
+float accelX,            accelY,             accelZ,            // units m/s/s i.e. accelZ if often 9.8 (gravity)
+      gyroX,             gyroY,              gyroZ,             // units dps (degrees per second)
+      gyroDriftX,        gyroDriftY,         gyroDriftZ,        // units dps
+      gyroRoll,          gyroPitch,          gyroYaw,           // units degrees (expect major drift)
+      gyroCorrectedRoll, gyroCorrectedPitch, gyroCorrectedYaw,  // units degrees (expect minor drift)
+      accRoll,           accPitch,           accYaw,            // units degrees (roll and pitch noisy, yaw not possible)
+      complementaryRoll, complementaryPitch, complementaryYaw;  // units degrees (excellent roll, pitch, yaw minor drift)
+
+long lastTime;
+long lastInterval;
 
 void setup() {
     //===============================BLUETOOTH BEGINS===============================//
@@ -105,39 +117,98 @@ void setup() {
     } else {
         Serial.println("Device OK!");
     }
+
+    Serial.println("Calculating Gyro Sensor Calibration Values...");
+    delay(500);
+
+    uint32_t previousTime = millis();
+    gyroX = 0;
+    gyroY = 0;
+    gyroZ = 0;
+    int cnt = 0;
+
+    while (millis() - previousTime < 2500) {
+        gyroX += myIMU.readFloatGyroX();
+        gyroY += myIMU.readFloatGyroY();
+        gyroZ += myIMU.readFloatGyroZ();
+        cnt++;
+    }
+    gyroDriftX = gyroX / cnt;
+    gyroDriftY = gyroY / cnt;
+    gyroDriftZ = gyroZ / cnt;
 }
 
 void loop() {
-    // Accelerometer
-    Serial.print("\nAccelerometer:\n");
-    Serial.print(" X1 = ");
-    Serial.println(myIMU.readFloatAccelX(), 4);
-    Serial.print(" Y1 = ");
-    Serial.println(myIMU.readFloatAccelY(), 4);
-    Serial.print(" Z1 = ");
-    Serial.println(myIMU.readFloatAccelZ(), 4);
+    accelX = myIMU.readFloatAccelX();
+    accelY = myIMU.readFloatAccelY();
+    accelZ = myIMU.readFloatAccelZ();
+    gyroX = myIMU.readFloatGyroX();
+    gyroY = myIMU.readFloatGyroY();
+    gyroZ = myIMU.readFloatGyroZ();
 
-    // Gyroscope
-    Serial.print("\nGyroscope:\n");
-    Serial.print(" X1 = ");
-    Serial.println(myIMU.readFloatGyroX(), 4);
-    Serial.print(" Y1 = ");
-    Serial.println(myIMU.readFloatGyroY(), 4);
-    Serial.print(" Z1 = ");
-    Serial.println(myIMU.readFloatGyroZ(), 4);
+    long currentTime = micros();
+    lastInterval = currentTime - lastTime; // expecting this to be ~104Hz +- 4%
+    lastTime = currentTime;
 
-    // Thermometer
-    // Serial.print("\nThermometer:\n");
-    // Serial.print(" Degrees C1 = ");
-    // Serial.println(myIMU.readTempC(), 4);
-    // Serial.print(" Degrees F1 = ");
-    // Serial.println(myIMU.readTempF(), 4);
+    doCalculations();
+    printCalculations();
 
     String resultant;
-    resultant = String(myIMU.readFloatAccelX()) + "/" + myIMU.readFloatAccelY() + "/" + myIMU.readFloatAccelZ() + +myIMU.readFloatGyroX() + "/" +
-                myIMU.readFloatGyroY() + "/" + myIMU.readFloatGyroZ();
+    resultant = String(complementaryRoll) + "/" + complementaryPitch + "/" + complementaryYaw;
     bleuart.println(resultant);
+
     // delay(20);
+}
+
+void doCalculations() {
+  accRoll = atan2(accelY, accelZ) * 180 / M_PI;
+  accPitch = atan2(-accelX, sqrt(accelY * accelY + accelZ * accelZ)) * 180 / M_PI;
+
+  float lastFrequency = (float) 1000000.0 / lastInterval;
+  gyroRoll = gyroRoll + (gyroX / lastFrequency);
+  gyroPitch = gyroPitch + (gyroY / lastFrequency);
+  gyroYaw = gyroYaw + (gyroZ / lastFrequency);
+
+  gyroCorrectedRoll = gyroCorrectedRoll + ((gyroX - gyroDriftX) / lastFrequency);
+  gyroCorrectedPitch = gyroCorrectedPitch + ((gyroY - gyroDriftY) / lastFrequency);
+  gyroCorrectedYaw = gyroCorrectedYaw + ((gyroZ - gyroDriftZ) / lastFrequency);
+
+  complementaryRoll = complementaryRoll + ((gyroX - gyroDriftX) / lastFrequency);
+  complementaryPitch = complementaryPitch + ((gyroY - gyroDriftY) / lastFrequency);
+  complementaryYaw = complementaryYaw + ((gyroZ - gyroDriftZ) / lastFrequency);
+
+  complementaryRoll = 0.98 * complementaryRoll + 0.02 * accRoll;
+  complementaryPitch = 0.98 * complementaryPitch + 0.02 * accPitch;
+}
+
+/**
+   This comma separated format is best 'viewed' using 'serial plotter' or processing.org client (see ./processing/RollPitchYaw3d.pde example)
+*/
+void printCalculations() {
+  Serial.print(gyroRoll);
+  Serial.print(',');
+  Serial.print(gyroPitch);
+  Serial.print(',');
+  Serial.print(gyroYaw);
+  Serial.print(',');
+  Serial.print(gyroCorrectedRoll);
+  Serial.print(',');
+  Serial.print(gyroCorrectedPitch);
+  Serial.print(',');
+  Serial.print(gyroCorrectedYaw);
+  Serial.print(',');
+  Serial.print(accRoll);
+  Serial.print(',');
+  Serial.print(accPitch);
+  Serial.print(',');
+  Serial.print(accYaw);
+  Serial.print(',');
+  Serial.print(complementaryRoll);
+  Serial.print(',');
+  Serial.print(complementaryPitch);
+  Serial.print(',');
+  Serial.print(complementaryYaw);
+  Serial.println();
 }
 
 //===============================BLUETOOTH BEGINS===============================//

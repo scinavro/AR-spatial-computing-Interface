@@ -323,7 +323,6 @@ GameObject:
   - component: {fileID: 1641876020}
   - component: {fileID: 1641876025}
   - component: {fileID: 1641876026}
-  - component: {fileID: 1641876027}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -453,32 +452,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1641876019}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b61e7235a461f04089d8cd798652095, type: 3}
+  m_Script: {fileID: 11500000, guid: 4499efdff89bb2946a945d682dcbe90f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  test_data: {fileID: 0}
   rb: {fileID: 0}
   poseColor: {fileID: 0}
   receivedString: 
   AngleData: []
   pose: 0
-  client: {fileID: 0}
---- !u!114 &1641876027
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1641876019}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 367d8095b0723bc469f90ade80002acd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  test_data: {fileID: 0}
-  rb: {fileID: 0}
-  poseColor: {fileID: 0}
-  receivedString: 
-  AngleData: []
-  pose: 0
-  client: {fileID: 0}

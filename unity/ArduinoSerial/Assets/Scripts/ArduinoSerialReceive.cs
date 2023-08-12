@@ -2,18 +2,16 @@ using UnityEngine;
 
 public class ArduinoSerialReceive : MonoBehaviour
 {
-    public GameObject test_data;
     public Rigidbody rb;
     public Renderer poseColor;
 
     public string receivedString;
     public string[] AngleData;
-
     public int pose;
 
     public void RotateObject(string[] AngleData)
     {
-        transform.rotation = Quaternion.Euler(-float.Parse(AngleData[1]), float.Parse(AngleData[0]), -float.Parse(AngleData[2]));
+        transform.rotation = Quaternion.Euler(float.Parse(AngleData[1]), -float.Parse(AngleData[2]), -float.Parse(AngleData[0]));
     }
 
     public void ColorObject()

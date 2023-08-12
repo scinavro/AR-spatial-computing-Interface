@@ -48,7 +48,7 @@ public class BluetoothSerial : ArduinoSerialReceive
         {
             if (receivedString != "")
             {
-                var data = receivedString.Split("/");
+                data = receivedString.Split("/");
                 AngleData = data[0..3];
                 RotateObject(AngleData);
 

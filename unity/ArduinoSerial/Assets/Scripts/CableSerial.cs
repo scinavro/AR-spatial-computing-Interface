@@ -13,7 +13,7 @@ public class CableSerial : ArduinoSerialReceive
         {
             data_stream = new SerialPort("COM12", 115200);
             data_stream.Open(); // Initiate the serial stream
-            data_stream.ReadTimeout = 10;
+            data_stream.ReadTimeout = 100;
             data_stream.DtrEnable = true;
 
             rb = GetComponent<Rigidbody>();
@@ -30,7 +30,6 @@ public class CableSerial : ArduinoSerialReceive
     {
         try
         {
-            Debug.Log("hi");
             receivedString = data_stream.ReadLine();
         }
         catch (Exception ex)

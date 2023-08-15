@@ -23,7 +23,7 @@ BLEClientDis clientDis;   // device information client
 BLEClientUart clientUart; // bleuart client
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
     //  while ( !Serial ) delay(10);   // for nrf52840 with native usb
 
     Serial.println("Bluefruit52 Central BLEUART Example");

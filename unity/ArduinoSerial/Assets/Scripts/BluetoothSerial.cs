@@ -17,8 +17,9 @@ public class BluetoothSerial : ArduinoSerialReceive
     private Queue<int> EMG2 = new Queue<int>();
 
     // Start is called before the first frame update
-    private void Start()
+    public override void Start()
     {
+        base.Start();
         try
         {
             deviceName = "ESP32-BT-Slave";
@@ -31,7 +32,7 @@ public class BluetoothSerial : ArduinoSerialReceive
 
             LinkedList<BluetoothDevice> ds = bluetoothHelper.getPairedDevicesList();
 
-            rb = GetComponent<Rigidbody>();
+            var rb = GetComponent<Rigidbody>();
             poseColor = gameObject.GetComponent<Renderer>();
         }
         catch (Exception ex)
@@ -49,7 +50,7 @@ public class BluetoothSerial : ArduinoSerialReceive
             if (receivedString != "")
             {
                 var data = receivedString.Split("/");
-                AngleData = data[0..3];
+                var AngleData = data[0..3];
                 RotateObject(AngleData);
 
                 EMG1.Enqueue(int.Parse(data[3]));

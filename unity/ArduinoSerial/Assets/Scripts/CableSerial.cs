@@ -7,26 +7,25 @@ public class CableSerial : ArduinoSerialReceive
     SerialPort data_stream;
 
     // Start is called before the first frame update
-    void Start()
+    public override void Start()
     {
+        base.Start();
+        Debug.Log("cableserial");
         try
         {
-            data_stream = new SerialPort("COM12", 115200);
+            data_stream = new SerialPort("COM12", 9600);
             data_stream.Open(); // Initiate the serial stream
-            data_stream.ReadTimeout = 100;
+            data_stream.ReadTimeout = 1000;
             data_stream.DtrEnable = true;
-
-            rb = GetComponent<Rigidbody>();
-            poseColor = gameObject.GetComponent<Renderer>();
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
+            Debug.Log(ex);
         }
     }
 
     // Update is called once per frame
-    void Update()
+    public virtual void Update()
     {
         try
         {
@@ -35,14 +34,6 @@ public class CableSerial : ArduinoSerialReceive
         catch (Exception ex)
         {
             Debug.Log(ex);
-        }
-
-        if (receivedString != "")
-        {
-            Debug.Log("hello");
-            Debug.Log(receivedString);
-            AngleData = receivedString.Split("/");
-            RotateObject(AngleData);
         }
     }
 }

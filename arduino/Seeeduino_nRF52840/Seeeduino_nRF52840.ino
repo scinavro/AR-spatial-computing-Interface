@@ -47,16 +47,16 @@ BLEBas blebas;   // battery
 
 MPU6050 mpu;
 
-#define INTERRUPT_PIN 2 // use pin 2 on Arduino Uno & most boards
+#define INTERRUPT_PIN 6 // use pin 2 on Arduino Uno & most boards
 bool blinkState = false;
 
 // MPU control/status vars
-bool dmpReady = false;  // set true if DMP init was successful
-uint8_t mpuIntStatus;   // holds actual interrupt status byte from MPU
-uint8_t devStatus;      // return status after each device operation (0 = success, !0 = error)
-uint16_t packetSize;    // expected DMP packet size (default is 42 bytes)
-uint16_t fifoCount;     // count of all bytes currently in FIFO
-uint8_t fifoBuffer[64]; // FIFO storage buffer
+bool dmpReady = false;   // set true if DMP init was successful
+uint8_t mpuIntStatus;    // holds actual interrupt status byte from MPU
+uint8_t devStatus;       // return status after each device operation (0 = success, !0 = error)
+uint16_t packetSize;     // expected DMP packet size (default is 42 bytes)
+uint16_t fifoCount;      // count of all bytes currently in FIFO
+uint8_t fifoBuffer[336]; // FIFO storage buffer
 
 // orientation/motion vars
 Quaternion q;        // [w, x, y, z]         quaternion container
@@ -71,15 +71,25 @@ volatile bool mpuInterrupt = false; // indicates whether MPU interrupt pin has g
 void dmpDataReady() { mpuInterrupt = true; }
 //================================MPU6050 ENDS================================//
 
-float yaw, pitch, roll;
+#define JOYSTICK_X A0
+#define JOYSTICK_Y A1
+#define BUTTON 2
+
+#define MPU_POWER_SWITCH 10
+
+float roll, pitch, yaw;
+int xValue, yValue, btn;
 String resultant;
+
 int loopCnt;
 
 void setup() {
+    pinMode(MPU_POWER_SWITCH, OUTPUT);
+    digitalWrite(MPU_POWER_SWITCH, LOW); // initially turn off MPU not to be stuck at 'mpu.initialize()'
     // join I2C bus (I2Cdev library doesn't do this automatically)
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     Wire.begin();
-    Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
+    // Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
 #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
     Fastwire::setup(400, true);
 #endif
@@ -150,14 +160,16 @@ void setup() {
     mpu.initialize();
     pinMode(INTERRUPT_PIN, INPUT);
 
+    digitalWrite(MPU_POWER_SWITCH, HIGH); // turn on MPU
+
     // verify connection
     Serial.println(F("Testing device connections..."));
     Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
-    // // wait for ready
+    // wait for ready
     // Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-    // while (Serial.available() && Serial.read())
-    //     ; // empty buffer
+    while (Serial.available() && Serial.read())
+        ; // empty buffer
     // while (!Serial.available())
     //     ; // wait for data
     // while (Serial.available() && Serial.read())
@@ -209,10 +221,13 @@ void setup() {
     // configure LED for output
     pinMode(LED_RED, OUTPUT);
     //================================MPU6050 ENDS================================//
+
+    pinMode(BUTTON, INPUT_PULLUP);
+
+    bleuart.println(I2CDEVLIB_WIRE_BUFFER_LENGTH);
 }
 
 void loop() {
-    Serial.print(dmpReady);
     // if programming failed, don't try to do anything
     if (!dmpReady)
         return;
@@ -236,12 +251,14 @@ void loop() {
         blinkState = !blinkState;
         digitalWrite(LED_RED, blinkState);
     }
-    if (loopCnt % 300 == 0) {
-        resultant = String(roll) + "/" + pitch + "/" + yaw;
-        bleuart.println(resultant);
-        loopCnt = 0;
-    }
-    loopCnt++;
+
+    xValue = analogRead(JOYSTICK_X);
+    yValue = analogRead(JOYSTICK_Y);
+    btn = !digitalRead(BUTTON); // Button pressed = Grounded
+
+    resultant = String(roll) + "/" + pitch + "/" + yaw + "/" + xValue + "/" + yValue + "/" + btn;
+    bleuart.println(resultant);
+    loopCnt = 0;
 }
 
 //===============================BLUETOOTH BEGINS===============================//

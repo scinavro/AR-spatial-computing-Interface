@@ -84,8 +84,6 @@ void dmpDataReady() { mpuInterrupt = true; }
 #define MOTOR_POW OUT_DP
 #define MOTOR_CTR OUT_DM
 
-#define MPU_POWER_SWITCH 10
-
 float roll, pitch, yaw;
 int xValue, yValue, btn;
 String resultant;
@@ -93,8 +91,6 @@ String resultant;
 int loopCnt;
 
 void setup() {
-    pinMode(MPU_POWER_SWITCH, OUTPUT);
-    digitalWrite(MPU_POWER_SWITCH, LOW); // initially turn off MPU not to be stuck at 'mpu.initialize()'
     // join I2C bus (I2Cdev library doesn't do this automatically)
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     Wire.begin();
@@ -169,8 +165,6 @@ void setup() {
     mpu.initialize();
     pinMode(INTERRUPT_PIN, INPUT);
 
-    digitalWrite(MPU_POWER_SWITCH, HIGH); // turn on MPU
-
     // verify connection
     Serial.println(F("Testing device connections..."));
     Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
@@ -227,19 +221,21 @@ void setup() {
         Serial.println(F(")"));
     }
 
+    bleuart.println(I2CDEVLIB_WIRE_BUFFER_LENGTH);
+
     // configure LED for output
     pinMode(LED_RED, OUTPUT);
     //================================MPU6050 ENDS================================//
 
     pinMode(BUTTON, INPUT_PULLUP);
-
-    bleuart.println(I2CDEVLIB_WIRE_BUFFER_LENGTH);
+    pinMode(MOTOR_POW, OUTPUT);
 }
 
 void loop() {
     // if programming failed, don't try to do anything
     if (!dmpReady)
         return;
+
     // read a packet from FIFO
     if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet
                                                    // display Euler angles in degrees
@@ -262,6 +258,14 @@ void loop() {
     resultant = String(roll) + "/" + pitch + "/" + yaw + "/" + xValue + "/" + yValue + "/" + btn;
     Serial.println(resultant);
     bleuart.println(resultant);
+
+    if (btn == 1) {
+        Serial.println("motor pow high");
+        digitalWrite(MOTOR_POW, HIGH);
+    } else {
+        Serial.println("motor pow low");
+        digitalWrite(MOTOR_POW, LOW);
+    }
 }
 
 //===============================BLUETOOTH BEGINS===============================//

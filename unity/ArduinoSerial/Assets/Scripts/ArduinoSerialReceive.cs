@@ -35,8 +35,10 @@ public class ArduinoSerialReceive : MonoBehaviour
 
     public void MoveObject(string[] AccelData)
     {
-        var xAccel = Mathf.Abs(float.Parse(AccelData[0]) - accelDrift1) > accelThreshold ? float.Parse(AccelData[0]) - accelDrift1 : 0;
-        var zAccel = Mathf.Abs(float.Parse(AccelData[1]) - accelDrift1) > accelThreshold ? -(float.Parse(AccelData[1]) - accelDrift1) : 0;
+        // var xAccel = Mathf.Abs(float.Parse(AccelData[0]) - accelDrift1) > accelThreshold ? float.Parse(AccelData[0]) - accelDrift1 : 0;
+        // var zAccel = Mathf.Abs(float.Parse(AccelData[1]) - accelDrift1) > accelThreshold ? -(float.Parse(AccelData[1]) - accelDrift1) : 0;
+        var xAccel = Mathf.Abs(float.Parse(AccelData[1]) - accelDrift1) > accelThreshold ? float.Parse(AccelData[1]) - accelDrift1 : 0;
+        var zAccel = Mathf.Abs(float.Parse(AccelData[0]) - accelDrift1) > accelThreshold ? float.Parse(AccelData[0]) - accelDrift1 : 0;
         Vector3 movement = new Vector3(xAccel, 0, zAccel);
         int jump = int.Parse(AccelData[2]);
 
@@ -47,6 +49,9 @@ public class ArduinoSerialReceive : MonoBehaviour
 
     public void ColorObject()
     {
+
+
+
         if (pose == 1) // FIST
             poseColor.material.color = Color.magenta;
         else if (pose == 2) // SPREAD

@@ -71,9 +71,18 @@ volatile bool mpuInterrupt = false; // indicates whether MPU interrupt pin has g
 void dmpDataReady() { mpuInterrupt = true; }
 //================================MPU6050 ENDS================================//
 
-#define JOYSTICK_X A0
-#define JOYSTICK_Y A1
-#define BUTTON 2
+#define IN_CC A0
+#define IN_DM A1
+#define IN_DP A2
+#define OUT_CC D8
+#define OUT_DM D9
+#define OUT_DP D10
+
+#define BUTTON IN_CC
+#define JOYSTICK_X IN_DP
+#define JOYSTICK_Y IN_DM
+#define MOTOR_POW OUT_DP
+#define MOTOR_CTR OUT_DM
 
 #define MPU_POWER_SWITCH 10
 
@@ -240,12 +249,6 @@ void loop() {
         yaw = ypr[0] * 180 / M_PI;
         pitch = ypr[1] * 180 / M_PI;
         roll = ypr[2] * 180 / M_PI;
-        Serial.print("ypr\t");
-        Serial.print(yaw);
-        Serial.print("\t");
-        Serial.print(pitch);
-        Serial.print("\t");
-        Serial.println(roll);
 
         // blink LED to indicate activity
         blinkState = !blinkState;
@@ -257,8 +260,8 @@ void loop() {
     btn = !digitalRead(BUTTON); // Button pressed = Grounded
 
     resultant = String(roll) + "/" + pitch + "/" + yaw + "/" + xValue + "/" + yValue + "/" + btn;
+    Serial.println(resultant);
     bleuart.println(resultant);
-    loopCnt = 0;
 }
 
 //===============================BLUETOOTH BEGINS===============================//

@@ -30,7 +30,7 @@ public class ArduinoSerialReceive : MonoBehaviour
 
     public void RotateObject(string[] AngleData)
     {
-        Pivot.transform.rotation = Quaternion.Euler(-float.Parse(AngleData[1]), float.Parse(AngleData[2]), -float.Parse(AngleData[0]));
+        Pivot.transform.rotation = Quaternion.Euler(float.Parse(AngleData[1]), float.Parse(AngleData[2]), float.Parse(AngleData[0]));
     }
 
     public void MoveObject(string[] AccelData)
@@ -49,9 +49,6 @@ public class ArduinoSerialReceive : MonoBehaviour
 
     public void ColorObject()
     {
-
-
-
         if (pose == 1) // FIST
             poseColor.material.color = Color.magenta;
         else if (pose == 2) // SPREAD

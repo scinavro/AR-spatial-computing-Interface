@@ -259,13 +259,27 @@ void loop() {
     Serial.println(resultant);
     bleuart.println(resultant);
 
-    if (btn == 1) {
-        Serial.println("motor pow high");
-        digitalWrite(MOTOR_POW, HIGH);
+    if (bleuart.available()) {
+        int str = bleuart.read();
+        Serial.write(str);
+
+        if (str == 'T') { // Toggle
+            digitalWrite(MOTOR_POW, HIGH);
+        } else if (str == 'C') { // Change Time
+            digitalWrite(MOTOR_POW, HIGH);
+        } else if (str == 'H') { // Heart
+            digitalWrite(MOTOR_POW, HIGH);
+        }
     } else {
-        Serial.println("motor pow low");
         digitalWrite(MOTOR_POW, LOW);
     }
+
+    // A pulse each 20ms
+    digitalWrite(MOTOR_CTR, HIGH);
+    delayMicroseconds(1450); // Duration of the pusle in microseconds
+    digitalWrite(MOTOR_CTR, LOW);
+    delayMicroseconds(18550); // 20ms - duration of the pusle
+    // Pulses duration: 600 - 0deg; 1450 - 90deg; 2300 - 180deg
 }
 
 //===============================BLUETOOTH BEGINS===============================//
